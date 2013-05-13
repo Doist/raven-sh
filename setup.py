@@ -17,7 +17,10 @@ setup(
     description='raven-sh is a client for Sentry which can be used as '
                 'a wrapper for cron jobs',
     long_description=read('README.rst'),
-    packages=find_packages(),
+    py_modules=['raven_sh'],
+    install_requires=[
+        'raven',
+    ],
     entry_points={
         'console_scripts': [
             'raven-sh = raven_sh:main',
