@@ -22,6 +22,8 @@ Example of cron task::
 from __future__ import absolute_import
 from __future__ import print_function
 
+import warnings
+
 import os
 import sys
 import optparse
@@ -51,10 +53,8 @@ class Runner(object):
             raise SystemExit('Command to execute is not defined. Exit')
         self.setup_logging()
 
-
     def setup_logging(self):
         logging.basicConfig(format='%(message)s')
-
 
     def get_parser(self):
         parser = optparse.OptionParser(usage=__doc__)
@@ -78,7 +78,6 @@ class Runner(object):
                                             '(optional)')
         return parser
 
-
     def run(self):
         pipe = subp.Popen(self.args, stdout=subp.PIPE, stderr=subp.PIPE)
         out, err = pipe.communicate()
@@ -95,11 +94,11 @@ class Runner(object):
         })
         extra = self.opts.extra or {}
         extra.update({
-            'stdout': out.rstrip(),
-            'stderr': err.rstrip(),
             'returncode': returncode,
             'command': self.get_command(),
         })
+        extra.update(string_to_chunks('stdout', out.rstrip()))
+        extra.update(string_to_chunks('stderr', err.rstrip()))
 
         capture_message_kwargs = dict(
             message=self.get_raven_message(returncode),
@@ -123,10 +122,58 @@ class Runner(object):
 
     def get_raven(self):
         dsn = self.opts.dsn or os.getenv('SENTRY_DSN')
+        error_msg = 'Neither --dsn option or SENTRY_DSN env variable defined'
+
+        if not dsn and self.opts.debug:
+            warnings.warn(error_msg)
+            dsn = 'https://x:x@localhost/1'
+
         if not dsn:
-            raise SystemExit('Neither --dsn option or SENTRY_DSN env variable '
-                             'is defined.')
+            raise SystemExit(error_msg)
+
         return raven.Client(dsn=dsn)
+
+
+def string_to_chunks(name, string, max_chars=400):
+    """
+    Sentry has message size limits: no more than 400 chars in a string, and no more than 50 elements in a list.
+
+    Since stdout and stderr is the only important piece of data we have, we do our best to collect as much as possible
+    """
+    chunks = []
+    chunk_items = []
+    chunk_chars = 0
+
+    for line in (string or '').splitlines():
+
+        if chunk_chars + len(line) + 1 <= max_chars:  # +1 is "\n" to join
+            # keep adding values to current chunk
+            chunk_items.append(line)
+            chunk_chars += len(line) + 1
+        else:
+            # close current chunk and create a new one
+            if chunk_items:
+                chunks.append('\n'.join(chunk_items))
+            chunk_items = [line]
+            chunk_chars = len(line) + 1
+
+    # final action: close current chunk
+    if chunk_items:
+        chunks.append('\n'.join(chunk_items))
+
+    # format output
+    if not chunks:
+        return {}
+
+    if len(chunks) == 1:
+        return {name: chunks[0]}
+
+    ret = {}
+    positions = len(str(len(chunks)))  # e.g. returns 3 for 111 chunks
+    template = '%s%%0%dd' % (name, positions)  # something like 'stdout%03d'
+    for i, chunk in enumerate(chunks):
+        ret[template % i] = chunk
+    return ret
 
 
 def main():
