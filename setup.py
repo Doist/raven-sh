@@ -10,7 +10,7 @@ def read(fname):
 
 setup(
     name='raven-sh',
-    version='0.1',
+    version='0.2',
     author='Roman Imankulov',
     author_email='roman.imankulov@gmail.com',
     url='http://github.com/doist/raven-sh',
