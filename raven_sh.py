@@ -33,6 +33,11 @@ from raven.utils.json import json
 from pprint import pprint
 import subprocess as subp
 
+if sys.version_info[0] == 2:
+    _raw, _text = str, unicode
+else:
+    _raw, _text = bytes, str
+
 
 def store_json(option, opt_str, value, parser):
     try:
@@ -153,13 +158,13 @@ def string_to_chunks(name, string, max_chars=400):
         else:
             # close current chunk and create a new one
             if chunk_items:
-                chunks.append('\n'.join(chunk_items))
+                chunks.append('\n'.join(map(ensure_text, chunk_items)))
             chunk_items = [line]
             chunk_chars = len(line) + 1
 
     # final action: close current chunk
     if chunk_items:
-        chunks.append('\n'.join(map(str, chunk_items)))
+        chunks.append('\n'.join(map(ensure_text, chunk_items)))
 
     # format output
     if not chunks:
@@ -174,6 +179,18 @@ def string_to_chunks(name, string, max_chars=400):
     for i, chunk in enumerate(chunks):
         ret[template % i] = chunk
     return ret
+
+
+def ensure_text(obj):
+    """
+    Helper function to convert utf8-encoded raw bytes to text. Converts
+    unknown characters to Unicode question mark
+    """
+    if isinstance(obj, _raw):
+        return obj.decode('utf8', 'replace')
+    elif isinstance(obj, _text):
+        return obj
+    return _text(obj)
 
 
 def main():

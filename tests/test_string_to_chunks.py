@@ -11,7 +11,7 @@ def test_string_to_chunks_short():
 
 
 def test_string_to_chunks_long_line():
-    src = 'value\n' + 'a' * 100
+    src = b'value\n' + b'a' * 100
     expected = {
         'foo0': 'value',
         'foo1': 'a' * 100,
@@ -20,7 +20,7 @@ def test_string_to_chunks_long_line():
 
 
 def test_string_to_chunks_many_lines():
-    src = 'value\n' * 22
+    src = b'value\n' * 22
     expected = {
         'foo00': 'value\nvalue',
         'foo01': 'value\nvalue',
