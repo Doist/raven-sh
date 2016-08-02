@@ -159,7 +159,7 @@ def string_to_chunks(name, string, max_chars=400):
 
     # final action: close current chunk
     if chunk_items:
-        chunks.append('\n'.join(chunk_items))
+        chunks.append('\n'.join(map(str, chunk_items)))
 
     # format output
     if not chunks:
