@@ -19,7 +19,7 @@ setup(
     long_description=read('README.rst'),
     py_modules=['raven_sh'],
     install_requires=[
-        'raven',
+        'raven>=5.9.0',
     ],
     entry_points={
         'console_scripts': [

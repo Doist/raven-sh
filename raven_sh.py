@@ -81,6 +81,10 @@ class Runner(object):
 
         parser.add_option('--message', help='Message string to send to sentry '
                                             '(optional)')
+        parser.add_option('--environment', dest='environment',
+                          help='Deploy environment. Alternatively setup '
+                               'SENTRY_ENVIRONMENT environment variable')
+
         return parser
 
     def run(self):
@@ -127,6 +131,7 @@ class Runner(object):
 
     def get_raven(self):
         dsn = self.opts.dsn or os.getenv('SENTRY_DSN')
+        environment = self.opts.environment or os.getenv('SENTRY_ENVIRONMENT', 'production')
         error_msg = 'Neither --dsn option or SENTRY_DSN env variable defined'
 
         if not dsn and self.opts.debug:
@@ -136,7 +141,7 @@ class Runner(object):
         if not dsn:
             raise SystemExit(error_msg)
 
-        return raven.Client(dsn=dsn)
+        return raven.Client(dsn=dsn, environment=environment)
 
 
 def string_to_chunks(name, string, max_chars=400):
