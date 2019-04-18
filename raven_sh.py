@@ -24,19 +24,21 @@ from __future__ import print_function
 
 import warnings
 
+import json
 import os
 import sys
 import optparse
 import logging
-import raven
-from raven.utils.json import json
 from pprint import pprint
+import sentry_sdk
 import subprocess as subp
 
 if sys.version_info[0] == 2:
     _raw, _text = str, unicode
+    iteritems = lambda x: x.iteritems()
 else:
     _raw, _text = bytes, str
+    iteritems = lambda x: x.items()
 
 
 def store_json(option, opt_str, value, parser):
@@ -53,10 +55,24 @@ class Runner(object):
     def __init__(self):
         parser = self.get_parser()
         self.opts, self.args = parser.parse_args()
-        self.raven = self.get_raven()
+        self.setup_sentry()
         if not self.args:
             raise SystemExit('Command to execute is not defined. Exit')
         self.setup_logging()
+
+    def setup_sentry(self):
+        dsn = self.opts.dsn or os.getenv('SENTRY_DSN')
+        environment = self.opts.environment or os.getenv('SENTRY_ENVIRONMENT', 'production')
+        error_msg = 'Neither --dsn option or SENTRY_DSN env variable defined'
+
+        if not dsn and self.opts.debug:
+            warnings.warn(error_msg)
+            dsn = 'https://x:x@localhost/1'
+
+        if not dsn:
+            raise SystemExit(error_msg)
+
+        sentry_sdk.init(dsn, environment=environment)
 
     def setup_logging(self):
         logging.basicConfig(format='%(message)s')
@@ -119,7 +135,13 @@ class Runner(object):
         if self.opts.debug:
             pprint(capture_message_kwargs)
         else:
-            self.raven.captureMessage(**capture_message_kwargs)
+            with sentry_sdk.push_scope() as scope:
+                for k, v in iteritems(extra):
+                    scope.set_extra(k, v)
+                for k, v in iteritems(tags):
+                    scope.set_tag(k, v)
+                sentry_sdk.capture_message(capture_message_kwargs["message"],
+                                           level=capture_message_kwargs["level"])
 
     def get_raven_message(self, returncode):
         if self.opts.message:
@@ -128,20 +150,6 @@ class Runner(object):
 
     def get_command(self):
         return ' '.join(self.args)
-
-    def get_raven(self):
-        dsn = self.opts.dsn or os.getenv('SENTRY_DSN')
-        environment = self.opts.environment or os.getenv('SENTRY_ENVIRONMENT', 'production')
-        error_msg = 'Neither --dsn option or SENTRY_DSN env variable defined'
-
-        if not dsn and self.opts.debug:
-            warnings.warn(error_msg)
-            dsn = 'https://x:x@localhost/1'
-
-        if not dsn:
-            raise SystemExit(error_msg)
-
-        return raven.Client(dsn=dsn, environment=environment)
 
 
 def string_to_chunks(name, string, max_chars=400):

@@ -13,13 +13,13 @@ setup(
     version='0.4',
     author='Roman Imankulov',
     author_email='roman.imankulov@gmail.com',
-    url='http://github.com/doist/raven-sh',
+    url='https://github.com/doist/raven-sh',
     description='raven-sh is a client for Sentry which can be used as '
                 'a wrapper for cron jobs',
     long_description=read('README.rst'),
     py_modules=['raven_sh'],
     install_requires=[
-        'raven>=5.9.0',
+        'sentry-sdk>=0.7.10',
     ],
     entry_points={
         'console_scripts': [
