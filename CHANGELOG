@@ -1,0 +1,4 @@
+## [0.5] - 2019-04-19
+
+- Migrate away from deprecated raven to sentry-sdk
+- Define the license explicitly

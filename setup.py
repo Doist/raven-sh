@@ -10,9 +10,9 @@ def read(fname):
 
 setup(
     name='raven-sh',
-    version='0.4',
-    author='Roman Imankulov',
-    author_email='roman.imankulov@gmail.com',
+    version='0.5',
+    author='Doist Developers',
+    author_email='dev@doist.com',
     url='https://github.com/doist/raven-sh',
     description='raven-sh is a client for Sentry which can be used as '
                 'a wrapper for cron jobs',
@@ -26,7 +26,9 @@ setup(
             'raven-sh = raven_sh:main',
         ],
     },
+    license='MIT',
     classifiers=[
+        'License :: OSI Approved :: MIT License',
         'Intended Audience :: Developers',
         'Intended Audience :: System Administrators',
         'Topic :: Software Development',
