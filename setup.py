@@ -10,7 +10,7 @@ def read(fname):
 
 setup(
     name='raven-sh',
-    version='0.5',
+    version='0.5.1',
     author='Doist Developers',
     author_email='dev@doist.com',
     url='https://github.com/doist/raven-sh',
@@ -32,5 +32,10 @@ setup(
         'Intended Audience :: Developers',
         'Intended Audience :: System Administrators',
         'Topic :: Software Development',
+        'Programming Language :: Python',
+        'Programming Language :: Python :: 2',
+        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.7',
     ],
 )
